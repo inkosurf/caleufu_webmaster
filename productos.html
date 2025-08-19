@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Caleufu</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2d3748;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .status.success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        
+        .status.error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        
+        .status.loading {
+            background: #bee3f8;
+            color: #2a4365;
+        }
+        
+        .required {
+            color: #e53e3e;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌿 Panel Administración Caleufu</h1>
+        
+        <form id="caleufu-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="imagenFrente">URL Imagen Frente <span class="required">*</span></label>
+                    <input type="url" id="imagenFrente" name="imagenFrente" required 
+                           placeholder="https://ejemplo.com/imagen-frente.jpg">
+                </div>
+                
+                <div class="form-group">
+                    <label for="imagenReverso">URL Imagen Reverso <span class="required">*</span></label>
+                    <input type="url" id="imagenReverso" name="imagenReverso" required 
+                           placeholder="https://ejemplo.com/imagen-reverso.jpg">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="tituloFrente">Título Frente <span class="required">*</span></label>
+                    <input type="text" id="tituloFrente" name="tituloFrente" required 
+                           placeholder="Título que aparece al frente">
+                </div>
+                
+                <div class="form-group">
+                    <label for="tituloDetras">Título Detrás <span class="required">*</span></label>
+                    <input type="text" id="tituloDetras" name="tituloDetras" required 
+                           placeholder="Título que aparece al reverso">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="subtituloDetras">Subtítulo Detrás <span class="required">*</span></label>
+                <textarea id="subtituloDetras" name="subtituloDetras" required 
+                          placeholder="Descripción o subtítulo del reverso de la tarjeta"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="textoBoton">Texto del Botón <span class="required">*</span></label>
+                <input type="text" id="textoBoton" name="textoBoton" required 
+                       placeholder="Ej: Ver más, Comprar, Contactar">
+            </div>
+            
+            <button type="submit" class="btn">📤 Enviar a Google Sheets</button>
+        </form>
+        
+        <div id="status" class="status" style="display: none;"></div>
+    </div>
+
+    <script>
+        // CAMBIA ESTA URL POR LA DE TU APPS SCRIPT
+        const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbx2ltTQ4XrIkmzqbtzlcB6_ZTjawsfKbpFLaZp5Fa4H8e-9UyTQWSnYsYxKPoav_AuB-w/exec";
+        
+        const form = document.getElementById('caleufu-form');
+        const statusDiv = document.getElementById('status');
+        const submitBtn = form.querySelector('.btn');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Mostrar estado de carga
+            showStatus('Enviando datos...', 'loading');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Enviando...';
+            
+            try {
+                // Recopilar datos del formulario
+                const formData = new FormData(form);
+                const datos = Object.fromEntries(formData.entries());
+                
+                console.log('📤 Enviando:', datos);
+                
+                // Enviar a Apps Script
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(datos)
+                });
+                
+                const resultado = await response.json();
+                console.log('📥 Respuesta:', resultado);
+                
+                if (resultado.success) {
+                    showStatus('✅ Datos guardados correctamente en Google Sheets', 'success');
+                    form.reset();
+                } else {
+                    throw new Error(resultado.error || 'Error desconocido');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                showStatus(`❌ Error: ${error.message}`, 'error');
+            } finally {
+                // Restaurar botón
+                submitBtn.disabled = false;
+                submitBtn.textContent = '📤 Enviar a Google Sheets';
+            }
+        });
+        
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+            
+            // Auto-ocultar después de 5 segundos si es éxito
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+    </script>
+</body>
+</html>
