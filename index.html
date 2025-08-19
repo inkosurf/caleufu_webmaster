@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Caleufu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .logo {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #94B24F, #7E8F54);
+            border-radius: 50%;
+            margin: 0 auto 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        h1 {
+            color: #2d3748;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            color: #718096;
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+        }
+        
+        .buttons-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .option-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px 20px;
+            text-decoration: none;
+            color: #2d3748;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .option-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .option-card:hover::before {
+            left: 100%;
+        }
+        
+        .option-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        .option-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        .productos-card {
+            background: linear-gradient(135deg, #94B24F, #7E8F54);
+            color: white;
+        }
+        
+        .publicaciones-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .option-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .option-description {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #718096;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .back-link:hover {
+            color: #2d3748;
+        }
+        
+        @media (max-width: 600px) {
+            .buttons-container {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .option-card {
+                padding: 25px 15px;
+            }
+            
+            .option-icon {
+                font-size: 2.5rem;
+            }
+        }
+        
+        .info-box {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 30px;
+            color: #4c51bf;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🌿</div>
+        
+        <h1>Panel de Administración</h1>
+        <p class="subtitle">Gestiona el contenido de Caleufu</p>
+        
+        <div class="buttons-container">
+            <a href="productos.html" class="option-card productos-card">
+                <span class="option-icon">📦</span>
+                <div class="option-title">Productos</div>
+                <div class="option-description">
+                    Agregar tarjetas de productos con imagen frente/reverso
+                </div>
+            </a>
+            
+            <a href="publicaciones.html" class="option-card publicaciones-card">
+                <span class="option-icon">📝</span>
+                <div class="option-title">Publicaciones</div>
+                <div class="option-description">
+                    Subir publicaciones con imágenes a Firebase
+                </div>
+            </a>
+        </div>
+        
+        <div class="info-box">
+            <strong>💡 Tip:</strong> Los productos se guardan en Google Sheets y las publicaciones en Firebase. 
+            Ambos se actualizan automáticamente en tu sitio web.
+        </div>
+        
+        <a href="https://caleufuyerbamate.com.ar" class="back-link">
+            ← Volver al sitio web
+        </a>
+    </div>
+</body>
+</html>
