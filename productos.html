@@ -352,7 +352,7 @@
     <div class="container">
         <div class="header">
             <h1>📦 Gestión de Productos</h1>
-            <p class="subtitle">Agregar productos con imágenes a Firebase</p>
+            <p class="subtitle">Agregar productos completos a Firebase</p>
         </div>
         
         <form id="caleufu-form">
@@ -414,6 +414,7 @@
         // === IMPORTS FIREBASE ===
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
         // === CONFIGURACIÓN FIREBASE ===
         const firebaseConfig = {
@@ -429,9 +430,7 @@
         // === INICIALIZACIÓN ===
         const app = initializeApp(firebaseConfig);
         const storage = getStorage(app);
-
-        // URL del webhook de Apps Script
-        const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyI-ObGYAoCSp2o8FTrzwzaW3rF1CoDOPG2m9_4e1X2xVibekgly-itZJR27jELX8TJbA/exec";
+        const db = getFirestore(app);
         
         const form = document.getElementById('caleufu-form');
         const statusDiv = document.getElementById('status');
@@ -488,56 +487,48 @@
             }
 
             // Mostrar estado de carga
-            showStatus('📤 Subiendo imágenes a Firebase...', 'loading');
+            showStatus('📤 Subiendo imágenes...', 'loading');
             submitBtn.disabled = true;
             submitBtn.textContent = '📤 Subiendo...';
             
             try {
-                // 1. SUBIR IMÁGENES A FIREBASE
-                console.log('🔥 Subiendo imágenes a Firebase...');
+                // 1. SUBIR IMÁGENES A FIREBASE STORAGE
+                console.log('🔥 Subiendo imágenes a Firebase Storage...');
                 
                 const [urlImagenFrente, urlImagenReverso] = await Promise.all([
                     subirImagen(imagenFrente, 'frente'),
                     subirImagen(imagenReverso, 'reverso')
                 ]);
                 
-                console.log('✅ URLs obtenidas:', {
+                console.log('✅ URLs de imágenes obtenidas:', {
                     frente: urlImagenFrente,
                     reverso: urlImagenReverso
                 });
 
-                // 2. PREPARAR DATOS PARA GOOGLE SHEETS
-                showStatus('📝 Guardando datos en Google Sheets...', 'loading');
+                // 2. GUARDAR DATOS EN FIRESTORE
+                showStatus('📝 Guardando producto en base de datos...', 'loading');
                 submitBtn.textContent = '📝 Guardando...';
                 
                 const formData = new FormData(form);
-                const datos = {
-                    imagenFrente: urlImagenFrente,     // URL de Firebase
-                    imagenReverso: urlImagenReverso,   // URL de Firebase
+                const productoData = {
+                    imagenFrente: urlImagenFrente,
+                    imagenReverso: urlImagenReverso,
                     tituloFrente: formData.get('tituloFrente'),
                     tituloDetras: formData.get('tituloDetras'),
                     subtituloDetras: formData.get('subtituloDetras'),
-                    textoBoton: formData.get('textoBoton')
+                    textoBoton: formData.get('textoBoton'),
+                    fechaCreacion: serverTimestamp(),
+                    activo: true // Por si quieres activar/desactivar productos
                 };
                 
-                console.log('📤 Enviando a Google Sheets:', datos);
+                console.log('📤 Guardando en Firestore:', productoData);
                 
-                // 3. ENVIAR A GOOGLE SHEETS (usando FormData para evitar CORS)
-                const postData = new FormData();
-                Object.keys(datos).forEach(key => {
-                    postData.append(key, datos[key]);
-                });
+                // Guardar en la colección "productos"
+                const docRef = await addDoc(collection(db, "productos"), productoData);
                 
-                const response = await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: postData
-                });
+                console.log('✅ Producto guardado con ID:', docRef.id);
                 
-                console.log('📥 Datos enviados a Google Sheets:', datos);
-                
-                // Como usamos 'no-cors', asumimos que se guardó correctamente
-                showStatus('✅ Producto guardado correctamente (imágenes en Firebase + datos en Google Sheets)', 'success');
+                showStatus('✅ Producto guardado correctamente en Firebase', 'success');
                 form.reset();
                 
                 // Limpiar validaciones visuales
