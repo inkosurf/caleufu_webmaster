@@ -1,88 +1,517 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Cargar publicación</title>
-  <style>
-    body { font-family: sans-serif; max-width: 680px; margin: 24px auto; padding: 0 12px; }
-    form { display: grid; gap: 12px; }
-    input, textarea, button { padding: 10px; font-size: 16px; }
-    .ok { color: #0a7c2f; } .err { color: #b00020; }
-  </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Publicaciones - Panel Caleufu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(118, 75, 162, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(102, 126, 234, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+        
+        h1 {
+            color: #2d3748;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: #764ba2;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.95rem;
+            position: relative;
+        }
+        
+        .required {
+            color: #EA9828;
+            font-weight: 700;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+            box-sizing: border-box;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 
+                0 0 0 3px rgba(102, 126, 234, 0.1),
+                0 4px 12px rgba(102, 126, 234, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        /* Estilo especial para inputs de archivo */
+        input[type="file"] {
+            padding: 12px 16px;
+            background: rgba(102, 126, 234, 0.05);
+            border: 2px dashed #667eea;
+            cursor: pointer;
+        }
+        
+        input[type="file"]:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: #764ba2;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+            line-height: 1.5;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 18px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+        
+        .btn:active {
+            transform: translateY(-1px);
+        }
+        
+        .btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn:disabled::before {
+            display: none;
+        }
+        
+        .status {
+            margin-top: 25px;
+            padding: 18px 25px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-left: 4px solid;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .status.ok {
+            background: linear-gradient(135deg, #c6f6d5, #9ae6b4);
+            color: #22543d;
+            border-left-color: #38a169;
+        }
+        
+        .status.err {
+            background: linear-gradient(135deg, #fed7d7, #feb2b2);
+            color: #742a2a;
+            border-left-color: #e53e3e;
+        }
+        
+        .status.loading {
+            background: linear-gradient(135deg, #e9d8fd, #d6bcfa);
+            color: #553c9a;
+            border-left-color: #805ad5;
+        }
+        
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #764ba2;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 8px 15px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        
+        .back-link:hover {
+            color: #667eea;
+            background: rgba(255, 255, 255, 1);
+            transform: translateX(-3px);
+        }
+        
+        /* Progress bar para carga de imágenes */
+        .upload-progress {
+            width: 100%;
+            height: 4px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .upload-progress-bar {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+        
+        .upload-progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background-image: linear-gradient(45deg, transparent 35%, rgba(255, 255, 255, 0.2) 35%, rgba(255, 255, 255, 0.2) 65%, transparent 65%);
+            background-size: 10px 10px;
+            animation: move 1s linear infinite;
+        }
+        
+        @keyframes move {
+            0% { background-position: 0 0; }
+            100% { background-position: 10px 10px; }
+        }
+        
+        .file-info {
+            font-size: 0.8rem;
+            color: #764ba2;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            body {
+                padding: 15px;
+            }
+            
+            .container {
+                padding: 25px 20px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .back-link {
+                position: static;
+                margin-bottom: 20px;
+                display: inline-flex;
+                width: fit-content;
+            }
+        }
+        
+        .container {
+            animation: slideIn 0.6s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .form-group.valid input,
+        .form-group.valid textarea {
+            border-color: #38a169;
+            background: rgba(198, 246, 213, 0.3);
+        }
+        
+        .form-group.invalid input,
+        .form-group.invalid textarea {
+            border-color: #e53e3e;
+            background: rgba(254, 215, 215, 0.3);
+        }
+    </style>
 </head>
 <body>
-  <h1>Cargar publicación</h1>
+    <a href="index.html" class="back-link">
+        ← Panel Principal
+    </a>
+    
+    <div class="container">
+        <div class="header">
+            <h1>📝 Gestión de Publicaciones</h1>
+            <p class="subtitle">Crear publicaciones con imágenes en Firebase</p>
+        </div>
+        
+        <form id="pubForm">
+            <div class="form-group">
+                <label for="imgFile">🖼️ Imagen <span class="required">*</span></label>
+                <input type="file" id="imgFile" accept="image/*" required>
+                <div class="upload-progress">
+                    <div class="upload-progress-bar"></div>
+                </div>
+                <div class="file-info">Selecciona la imagen principal de la publicación</div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="titulo">📰 Título <span class="required">*</span></label>
+                    <input type="text" id="titulo" required 
+                           placeholder="Título de la publicación">
+                </div>
+                
+                <div class="form-group">
+                    <label for="autor">👤 Autor <span class="required">*</span></label>
+                    <input type="text" id="autor" required 
+                           placeholder="Nombre del autor">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="descripcion">📄 Descripción <span class="required">*</span></label>
+                <textarea id="descripcion" rows="4" required 
+                          placeholder="Descripción detallada de la publicación"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="link">🔗 Link (Opcional)</label>
+                <input type="url" id="link" 
+                       placeholder="https://ejemplo.com">
+            </div>
+            
+            <button type="submit" class="btn">
+                📤 Guardar Publicación
+            </button>
+        </form>
+        
+        <p id="status" class="status" style="display: none;"></p>
+    </div>
 
-  <form id="pubForm">
-    <div><label>Imagen</label> <input type="file" id="imgFile" accept="image/*" required /></div>
-    <div><label>Título</label> <input type="text" id="titulo" required /></div>
-    <div><label>Autor</label> <input type="text" id="autor" required /></div>
-    <div><label>Descripción</label> <textarea id="descripcion" rows="4" required></textarea></div>
-    <div><label>Link</label> <input type="url" id="link" placeholder="https://..." /></div>
-    <button type="submit">Guardar</button>
-  </form>
-
-  <p id="status"></p>
-
-  <script type="module">
-    // === IMPORTS (CDN) — usa una sola versión consistente ===
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
-
-    // === TU CONFIG — OJO storageBucket termina en appspot.com ===
-    const firebaseConfig = {
-      apiKey: "AIzaSyDEpsW78ANRpnTQ9fZkwPQBUhYZVP2xw18",
-      authDomain: "caleufuyerbamate.firebaseapp.com",
-      databaseURL: "https://caleufuyerbamate-default-rtdb.firebaseio.com",
-      projectId: "caleufuyerbamate",
-      storageBucket: "caleufuyerbamate.firebasestorage.app",
-      messagingSenderId: "690153593667",
-      appId: "1:690153593667:web:b5f9d936f59f3c6336edf6"
-      // measurementId opcional: no lo usamos
-    };
-
-    // === INIT
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
-
-    // === FORM LOGIC
-    const form = document.getElementById("pubForm");
-    const statusEl = document.getElementById("status");
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      statusEl.textContent = "Subiendo..."; statusEl.className = "";
-      try {
-        const imgFile = document.getElementById("imgFile").files[0];
-        const titulo = document.getElementById("titulo").value.trim();
-        const autor = document.getElementById("autor").value.trim();
-        const descripcion = document.getElementById("descripcion").value.trim();
-        const link = document.getElementById("link").value.trim();
-
-        if (!imgFile) throw new Error("Falta la imagen");
-
-        // 1) subir imagen
-        const path = `publicaciones/${Date.now()}_${imgFile.name}`;
-        const storageRef = ref(storage, path);
-        await uploadBytes(storageRef, imgFile);
-        const imagenURL = await getDownloadURL(storageRef);
-
-        // 2) guardar doc
-        await addDoc(collection(db, "publicaciones"), {
-          titulo, autor, descripcion, link: link || null,
-          imagenURL, fecha: serverTimestamp()
+    <script type="module">
+        // === IMPORTS (CDN) — usa una sola versión consistente ===
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
+        
+        // === TU CONFIG — OJO storageBucket termina en appspot.com ===
+        const firebaseConfig = {
+            apiKey: "AIzaSyDEpsW78ANRpnTQ9fZkwPQBUhYZVP2xw18",
+            authDomain: "caleufuyerbamate.firebaseapp.com",
+            databaseURL: "https://caleufuyerbamate-default-rtdb.firebaseio.com",
+            projectId: "caleufuyerbamate",
+            storageBucket: "caleufuyerbamate.firebasestorage.app",
+            messagingSenderId: "690153593667",
+            appId: "1:690153593667:web:b5f9d936f59f3c6336edf6"
+        };
+        
+        // === INIT
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+        
+        // === FORM LOGIC
+        const form = document.getElementById("pubForm");
+        const statusEl = document.getElementById("status");
+        const submitBtn = form.querySelector('.btn');
+        
+        // Validación visual en tiempo real
+        const inputs = form.querySelectorAll('input:not([type="file"]), textarea');
+        inputs.forEach(input => {
+            input.addEventListener('blur', validateField);
+            input.addEventListener('input', clearValidation);
         });
-
-        form.reset();
-        statusEl.textContent = "✅ Publicación guardada"; statusEl.className = "ok";
-      } catch (err) {
-        console.error(err);
-        statusEl.textContent = "❌ " + (err.message || err); statusEl.className = "err";
-      }
-    });
-  </script>
+        
+        function validateField(e) {
+            const field = e.target;
+            const formGroup = field.closest('.form-group');
+            
+            if (field.hasAttribute('required') && !field.value.trim()) {
+                formGroup.classList.add('invalid');
+                formGroup.classList.remove('valid');
+            } else if (field.value.trim()) {
+                formGroup.classList.add('valid');
+                formGroup.classList.remove('invalid');
+            }
+        }
+        
+        function clearValidation(e) {
+            const formGroup = e.target.closest('.form-group');
+            formGroup.classList.remove('valid', 'invalid');
+        }
+        
+        function showStatus(message, type) {
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            statusEl.style.display = 'block';
+            
+            // Auto-ocultar después de 8 segundos si es éxito
+            if (type === 'ok') {
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 8000);
+            }
+        }
+        
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            showStatus("📤 Subiendo imagen...", "loading");
+            submitBtn.disabled = true;
+            submitBtn.textContent = '📤 Subiendo...';
+            
+            try {
+                const imgFile = document.getElementById("imgFile").files[0];
+                const titulo = document.getElementById("titulo").value.trim();
+                const autor = document.getElementById("autor").value.trim();
+                const descripcion = document.getElementById("descripcion").value.trim();
+                const link = document.getElementById("link").value.trim();
+                
+                if (!imgFile) throw new Error("Falta la imagen");
+                
+                // 1) subir imagen
+                showStatus("📝 Guardando datos...", "loading");
+                submitBtn.textContent = '📝 Guardando...';
+                
+                const path = `publicaciones/${Date.now()}_${imgFile.name}`;
+                const storageRef = ref(storage, path);
+                await uploadBytes(storageRef, imgFile);
+                const imagenURL = await getDownloadURL(storageRef);
+                
+                // 2) guardar doc
+                await addDoc(collection(db, "publicaciones"), {
+                    titulo, autor, descripcion, link: link || null,
+                    imagenURL, fecha: serverTimestamp()
+                });
+                
+                form.reset();
+                
+                // Limpiar validaciones visuales
+                inputs.forEach(input => {
+                    input.closest('.form-group').classList.remove('valid', 'invalid');
+                });
+                
+                showStatus("✅ Publicación guardada correctamente", "ok");
+                
+            } catch (err) {
+                console.error(err);
+                showStatus("❌ " + (err.message || err), "err");
+            } finally {
+                // Restaurar botón
+                submitBtn.disabled = false;
+                submitBtn.textContent = '📤 Guardar Publicación';
+            }
+        });
+    </script>
 </body>
 </html>
