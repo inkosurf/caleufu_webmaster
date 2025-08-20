@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrar Productos - Panel Caleufu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #94B24F 0%, #7E8F54 50%, #DAF7A6 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 3px solid #94B24F;
+            padding-bottom: 20px;
+        }
+        
+        h1 {
+            color: #2d3748;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: #7E8F54;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #7E8F54;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 8px 15px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .back-link:hover {
+            color: #94B24F;
+            background: rgba(255, 255, 255, 1);
+            transform: translateX(-3px);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 18px;
+            color: #666;
+        }
+        
+        .productos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .producto-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            border: 3px solid transparent;
+        }
+        
+        .producto-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+        
+        .producto-card.selected {
+            border-color: #e53e3e;
+            background: rgba(254, 215, 215, 0.1);
+        }
+        
+        .producto-checkbox {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 10;
+        }
+        
+        .producto-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #e53e3e;
+        }
+        
+        .producto-imagen {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .producto-info {
+            padding: 20px;
+        }
+        
+        .producto-titulo {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+        
+        .producto-descripcion {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin-bottom: 10px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .producto-fecha {
+            color: #94B24F;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .controles {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-seleccionar-todos,
+        .btn-borrar {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .btn-seleccionar-todos {
+            background: #94B24F;
+            color: white;
+        }
+        
+        .btn-seleccionar-todos:hover {
+            background: #7E8F54;
+        }
+        
+        .btn-borrar {
+            background: #e53e3e;
+            color: white;
+        }
+        
+        .btn-borrar:hover {
+            background: #c53030;
+            transform: translateY(-2px);
+        }
+        
+        .btn-borrar:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .contador-seleccionados {
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .status {
+            margin-top: 25px;
+            padding: 18px 25px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-left: 4px solid;
+        }
+        
+        .status.success {
+            background: linear-gradient(135deg, #c6f6d5, #9ae6b4);
+            color: #22543d;
+            border-left-color: #38a169;
+        }
+        
+        .status.error {
+            background: linear-gradient(135deg, #fed7d7, #feb2b2);
+            color: #742a2a;
+            border-left-color: #e53e3e;
+        }
+        
+        .status.loading {
+            background: linear-gradient(135deg, #bee3f8, #90cdf4);
+            color: #2a4365;
+            border-left-color: #3182ce;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #2d3748;
+        }
+        
+        @media (max-width: 768px) {
+            .controles {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .btn-seleccionar-todos,
+            .btn-borrar {
+                width: 100%;
+            }
+            
+            .productos-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">
+            ← Panel Principal
+        </a>
+        
+        <div class="header">
+            <h1>🗑️ Administrar Productos</h1>
+            <p class="subtitle">Selecciona y elimina productos existentes</p>
+        </div>
+        
+        <div id="productos-container" class="loading">
+            Cargando productos...
+        </div>
+        
+        <div id="controles" class="controles" style="display: none;">
+            <button id="btn-seleccionar-todos" class="btn-seleccionar-todos">
+                ✓ Seleccionar Todos
+            </button>
+            
+            <span id="contador" class="contador-seleccionados">
+                0 productos seleccionados
+            </span>
+            
+            <button id="btn-borrar" class="btn-borrar" disabled>
+                🗑️ Borrar Seleccionados
+            </button>
+        </div>
+        
+        <div id="status" class="status" style="display: none;"></div>
+    </div>
+
+    <script type="module">
+        // === IMPORTS FIREBASE ===
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, where, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+
+        // === CONFIGURACIÓN FIREBASE ===
+        const firebaseConfig = {
+            apiKey: "AIzaSyDEpsW78ANRpnTQ9fZkwPQBUhYZVP2xw18",
+            authDomain: "caleufuyerbamate.firebaseapp.com",
+            databaseURL: "https://caleufuyerbamate-default-rtdb.firebaseio.com",
+            projectId: "caleufuyerbamate",
+            storageBucket: "caleufuyerbamate.firebasestorage.app",
+            messagingSenderId: "690153593667",
+            appId: "1:690153593667:web:b5f9d936f59f3c6336edf6"
+        };
+
+        // === INICIALIZACIÓN ===
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        let productosActuales = [];
+        
+        // === ELEMENTOS DOM ===
+        const container = document.getElementById('productos-container');
+        const controles = document.getElementById('controles');
+        const btnSeleccionarTodos = document.getElementById('btn-seleccionar-todos');
+        const btnBorrar = document.getElementById('btn-borrar');
+        const contador = document.getElementById('contador');
+        const statusDiv = document.getElementById('status');
+
+        // === CARGAR PRODUCTOS ===
+        async function cargarProductos() {
+            try {
+                const q = query(
+                    collection(db, "productos"), 
+                    where("activo", "==", true),
+                    orderBy("fechaCreacion", "desc")
+                );
+                
+                const querySnapshot = await getDocs(q);
+                productosActuales = [];
+                
+                querySnapshot.forEach((doc) => {
+                    productosActuales.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                
+                mostrarProductos();
+                
+            } catch (error) {
+                console.error('Error al cargar productos:', error);
+                container.innerHTML = '<div class="empty-state"><h3>Error al cargar productos</h3></div>';
+            }
+        }
+
+        // === MOSTRAR PRODUCTOS ===
+        function mostrarProductos() {
+            if (productosActuales.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>📦 No hay productos</h3>
+                        <p>Agrega productos desde el panel principal</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const productosGrid = document.createElement('div');
+            productosGrid.className = 'productos-grid';
+            
+            productosActuales.forEach(producto => {
+                const fechaCreacion = producto.fechaCreacion ? 
+                    new Date(producto.fechaCreacion.seconds * 1000).toLocaleDateString() : 
+                    'Fecha no disponible';
+                
+                const productoCard = document.createElement('div');
+                productoCard.className = 'producto-card';
+                productoCard.dataset.id = producto.id;
+                
+                productoCard.innerHTML = `
+                    <div class="producto-checkbox">
+                        <input type="checkbox" value="${producto.id}">
+                    </div>
+                    
+                    <img src="${producto.imagenFrente}" alt="Producto" class="producto-imagen">
+                    
+                    <div class="producto-info">
+                        <div class="producto-titulo">${producto.tituloFrente}</div>
+                        <div class="producto-descripcion">${producto.subtituloDetras}</div>
+                        <div class="producto-fecha">📅 ${fechaCreacion}</div>
+                    </div>
+                `;
+                
+                // Evento para checkbox
+                const checkbox = productoCard.querySelector('input[type="checkbox"]');
+                checkbox.addEventListener('change', actualizarSeleccion);
+                
+                // Evento para seleccionar al hacer clic en la tarjeta
+                productoCard.addEventListener('click', (e) => {
+                    if (e.target.type !== 'checkbox') {
+                        checkbox.checked = !checkbox.checked;
+                        actualizarSeleccion();
+                    }
+                });
+                
+                productosGrid.appendChild(productoCard);
+            });
+            
+            container.innerHTML = '';
+            container.appendChild(productosGrid);
+            controles.style.display = 'flex';
+        }
+
+        // === ACTUALIZAR SELECCIÓN ===
+        function actualizarSeleccion() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const seleccionados = Array.from(checkboxes).filter(cb => cb.checked);
+            
+            // Actualizar estilos visuales
+            checkboxes.forEach(checkbox => {
+                const card = checkbox.closest('.producto-card');
+                if (checkbox.checked) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            });
+            
+            // Actualizar contador y botón
+            contador.textContent = `${seleccionados.length} productos seleccionados`;
+            btnBorrar.disabled = seleccionados.length === 0;
+            
+            // Actualizar botón de seleccionar todos
+            const todosMarcados = seleccionados.length === checkboxes.length && checkboxes.length > 0;
+            btnSeleccionarTodos.textContent = todosMarcados ? '✗ Deseleccionar Todos' : '✓ Seleccionar Todos';
+        }
+
+        // === SELECCIONAR/DESELECCIONAR TODOS ===
+        btnSeleccionarTodos.addEventListener('click', () => {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const todosMarcados = Array.from(checkboxes).every(cb => cb.checked);
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = !todosMarcados;
+            });
+            
+            actualizarSeleccion();
+        });
+
+        // === BORRAR PRODUCTOS SELECCIONADOS ===
+        btnBorrar.addEventListener('click', async () => {
+            const seleccionados = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'));
+            
+            if (seleccionados.length === 0) return;
+            
+            const confirmar = confirm(`¿Estás seguro de que quieres eliminar ${seleccionados.length} producto(s)? Esta acción no se puede deshacer.`);
+            if (!confirmar) return;
+            
+            showStatus('🗑️ Eliminando productos...', 'loading');
+            btnBorrar.disabled = true;
+            btnBorrar.textContent = '🗑️ Eliminando...';
+            
+            try {
+                const promesasEliminacion = seleccionados.map(checkbox => 
+                    deleteDoc(doc(db, "productos", checkbox.value))
+                );
+                
+                await Promise.all(promesasEliminacion);
+                
+                showStatus(`✅ ${seleccionados.length} producto(s) eliminado(s) correctamente`, 'success');
+                
+                // Recargar productos
+                await cargarProductos();
+                
+            } catch (error) {
+                console.error('Error al eliminar productos:', error);
+                showStatus(`❌ Error al eliminar productos: ${error.message}`, 'error');
+            } finally {
+                btnBorrar.disabled = false;
+                btnBorrar.textContent = '🗑️ Borrar Seleccionados';
+            }
+        });
+
+        // === MOSTRAR STATUS ===
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // === INICIALIZAR ===
+        cargarProductos();
+    </script>
+</body>
+</html>
