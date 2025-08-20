@@ -76,6 +76,26 @@
             font-size: 1rem;
             font-weight: 500;
         }
+
+        .limite-info {
+            background: rgba(148, 178, 79, 0.1);
+            border: 2px solid #94B24F;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .limite-info h3 {
+            color: #7E8F54;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .limite-info p {
+            color: #666;
+            font-size: 0.9rem;
+        }
         
         .form-group {
             margin-bottom: 25px;
@@ -118,7 +138,6 @@
             transform: translateY(-2px);
         }
         
-        /* Estilo especial para inputs de archivo */
         input[type="file"] {
             padding: 12px 16px;
             background: rgba(148, 178, 79, 0.05);
@@ -248,42 +267,6 @@
             transform: translateX(-3px);
         }
         
-        /* Progress bar para carga de imágenes */
-        .upload-progress {
-            width: 100%;
-            height: 4px;
-            background: rgba(148, 178, 79, 0.2);
-            border-radius: 2px;
-            margin-top: 10px;
-            overflow: hidden;
-            display: none;
-        }
-        
-        .upload-progress-bar {
-            height: 100%;
-            background: linear-gradient(135deg, #94B24F, #7E8F54);
-            width: 0%;
-            transition: width 0.3s ease;
-            position: relative;
-        }
-        
-        .upload-progress-bar::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            right: 0;
-            background-image: linear-gradient(45deg, transparent 35%, rgba(255, 255, 255, 0.2) 35%, rgba(255, 255, 255, 0.2) 65%, transparent 65%);
-            background-size: 10px 10px;
-            animation: move 1s linear infinite;
-        }
-        
-        @keyframes move {
-            0% { background-position: 0 0; }
-            100% { background-position: 10px 10px; }
-        }
-        
         .file-info {
             font-size: 0.8rem;
             color: #7E8F54;
@@ -354,24 +337,23 @@
             <h1>📦 Gestión de Productos</h1>
             <p class="subtitle">Agregar productos completos a Firebase</p>
         </div>
+
+        <div class="limite-info">
+            <h3>⚠️ Límite de Productos</h3>
+            <p>Máximo 6 productos. Si agregas un 7mo, se eliminará automáticamente el más antiguo.</p>
+        </div>
         
         <form id="caleufu-form">
             <div class="form-row">
                 <div class="form-group">
                     <label for="imagenFrente">🖼️ Imagen Frente <span class="required">*</span></label>
                     <input type="file" id="imagenFrente" name="imagenFrente" accept="image/*" required>
-                    <div class="upload-progress">
-                        <div class="upload-progress-bar"></div>
-                    </div>
                     <div class="file-info">Sube la imagen que aparece al frente de la tarjeta</div>
                 </div>
                 
                 <div class="form-group">
                     <label for="imagenReverso">🔄 Imagen Reverso <span class="required">*</span></label>
                     <input type="file" id="imagenReverso" name="imagenReverso" accept="image/*" required>
-                    <div class="upload-progress">
-                        <div class="upload-progress-bar"></div>
-                    </div>
                     <div class="file-info">Sube la imagen que aparece al reverso de la tarjeta</div>
                 </div>
             </div>
@@ -414,7 +396,7 @@
         // === IMPORTS FIREBASE ===
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, query, where, orderBy, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
         // === CONFIGURACIÓN FIREBASE ===
         const firebaseConfig = {
@@ -461,6 +443,27 @@
             formGroup.classList.remove('valid', 'invalid');
         }
 
+        // === FUNCIÓN PARA VERIFICAR LÍMITE DE PRODUCTOS ===
+        async function verificarLimiteProductos() {
+            const q = query(
+                collection(db, "productos"), 
+                where("activo", "==", true),
+                orderBy("fechaCreacion", "desc")
+            );
+            
+            const querySnapshot = await getDocs(q);
+            const productos = [];
+            
+            querySnapshot.forEach((doc) => {
+                productos.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            
+            return productos;
+        }
+
         // === FUNCIÓN PARA SUBIR IMAGEN A FIREBASE ===
         async function subirImagen(archivo, nombre) {
             const timestamp = Date.now();
@@ -474,7 +477,7 @@
             return downloadURL;
         }
 
-        // === EVENTO DEL FORMULARIO ===
+        // === EVENTO DEL FORMULARIO CON LÍMITE ===
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -486,14 +489,30 @@
                 return;
             }
 
-            // Mostrar estado de carga
-            showStatus('📤 Subiendo imágenes...', 'loading');
+            // Mostrar estado de verificación
+            showStatus('🔍 Verificando límite de productos...', 'loading');
             submitBtn.disabled = true;
-            submitBtn.textContent = '📤 Subiendo...';
+            submitBtn.textContent = '🔍 Verificando...';
             
             try {
-                // 1. SUBIR IMÁGENES A FIREBASE STORAGE
-                console.log('🔥 Subiendo imágenes a Firebase Storage...');
+                // 1. VERIFICAR LÍMITE DE PRODUCTOS
+                const productosExistentes = await verificarLimiteProductos();
+                
+                if (productosExistentes.length >= 6) {
+                    // Si hay 6 o más, eliminar el más antiguo
+                    const productoMasAntiguo = productosExistentes[productosExistentes.length - 1];
+                    
+                    showStatus('⚠️ Límite alcanzado. Reemplazando producto más antiguo...', 'loading');
+                    submitBtn.textContent = '🔄 Reemplazando...';
+                    
+                    // Eliminar el producto más antiguo
+                    await deleteDoc(doc(db, "productos", productoMasAntiguo.id));
+                    console.log('🗑️ Producto más antiguo eliminado:', productoMasAntiguo.id);
+                }
+
+                // 2. SUBIR IMÁGENES A FIREBASE STORAGE
+                showStatus('📤 Subiendo imágenes...', 'loading');
+                submitBtn.textContent = '📤 Subiendo...';
                 
                 const [urlImagenFrente, urlImagenReverso] = await Promise.all([
                     subirImagen(imagenFrente, 'frente'),
@@ -505,8 +524,8 @@
                     reverso: urlImagenReverso
                 });
 
-                // 2. GUARDAR DATOS EN FIRESTORE
-                showStatus('📝 Guardando producto en base de datos...', 'loading');
+                // 3. GUARDAR NUEVO PRODUCTO EN FIRESTORE
+                showStatus('📝 Guardando nuevo producto...', 'loading');
                 submitBtn.textContent = '📝 Guardando...';
                 
                 const formData = new FormData(form);
@@ -518,7 +537,7 @@
                     subtituloDetras: formData.get('subtituloDetras'),
                     textoBoton: formData.get('textoBoton'),
                     fechaCreacion: serverTimestamp(),
-                    activo: true // Por si quieres activar/desactivar productos
+                    activo: true
                 };
                 
                 console.log('📤 Guardando en Firestore:', productoData);
@@ -528,7 +547,7 @@
                 
                 console.log('✅ Producto guardado con ID:', docRef.id);
                 
-                showStatus('✅ Producto guardado correctamente en Firebase', 'success');
+                showStatus('✅ Producto guardado correctamente (máximo 6 productos)', 'success');
                 form.reset();
                 
                 // Limpiar validaciones visuales
